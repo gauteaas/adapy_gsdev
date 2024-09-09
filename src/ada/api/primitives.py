@@ -21,6 +21,8 @@ from .bounding_box import BoundingBox
 from .curves import CurveOpen3d, CurvePoly2d
 from .transforms import Placement
 
+from typing import Optional, Union
+
 if TYPE_CHECKING:
     from OCC.Core.TopoDS import TopoDS_Shape
 
@@ -599,3 +601,231 @@ class RationalBSplineSurfaceWithKnots(BSplineSurfaceWithKnots):
         entities = self.get_entities()
         entities["ControlPointsList"] = [[ifc_p(f, i[:3]) for i in x] for x in self.controlPointsList]
         return f.create_entity("IfcRationalBSplineSurfaceWithKnots", **entities)
+
+
+@dataclass
+class IfcFace():
+    """https://standards.buildingsmart.org/IFC/DEV/IFC4_2/FINAL/HTML/schema/ifctopologyresource/lexical/ifcadvancedface.htm"""
+
+    bounds: list[list[float]]
+
+    def get_entities(self):
+        return {"Bounds" : self.bounds}
+
+    def to_ifcopenshell(self, f):
+        from ada.cadit.ifc.utils import ifc_p
+
+        entities = self.get_entities()
+        entities["ControlPointsList"] = [[ifc_p(f, i[:3]) for i in x] for x in self.controlPointsList]
+        return f.create_entity("IfcRationalBSplineSurfaceWithKnots", **entities)
+
+
+@dataclass
+class IfcFaceSurface(IfcFace):
+    """https://standards.buildingsmart.org/IFC/DEV/IFC4_2/FINAL/HTML/schema/ifctopologyresource/lexical/ifcfacesurface.htm"""
+
+    faceSurface: RationalBSplineSurfaceWithKnots | BSplineSurfaceWithKnots
+    sameSense: bool
+
+    def get_entities(self):
+        entities = super().get_entities()
+        entities['FaceSurface'] = self.faceSurface
+        entities['SameSense'] = self.sameSense
+        return entities
+
+    def to_ifcopenshell(self, f):
+        from ada.cadit.ifc.utils import ifc_p
+
+        entities = self.get_entities()
+
+        return f.create_entity("IfcFaceSurface", **entities)
+
+
+@dataclass
+class IfcAdvancedFace(IfcFaceSurface):
+    """https://standards.buildingsmart.org/IFC/DEV/IFC4_2/FINAL/HTML/schema/ifctopologyresource/lexical/ifcadvancedface.htm"""
+
+    def get_entities(self):
+        entities = super().get_entities()
+        return entities
+
+    def to_ifcopenshell(self, f):
+        from ada.cadit.ifc.utils import ifc_p
+
+        entities = self.get_entities()
+
+        return f.create_entity("IfcAdvancedFace", **entities)
+
+
+@dataclass
+class IfcEdgeLoop():
+    """https://standards.buildingsmart.org/IFC/DEV/IFC4_2/FINAL/HTML/schema/ifctopologyresource/lexical/ifcedgeloop.htm"""
+
+    edge_list : list[IfcOrientedEdge]
+    def get_entities(self):
+        return {"EdgeList" : self.edge_list}
+
+    def to_ifcopenshell(self, f):
+        from ada.cadit.ifc.utils import ifc_p
+
+        entities = self.get_entities()
+
+        return f.create_entity("IfcEdgeLoop", **entities)
+
+@dataclass
+class IfcVertex():
+    """https://standards.buildingsmart.org/IFC/DEV/IFC4_2/FINAL/HTML/schema/ifctopologyresource/lexical/ifcvertex.htm"""
+
+
+    def get_entities(self):
+        return {}
+
+    def to_ifcopenshell(self, f):
+        from ada.cadit.ifc.utils import ifc_p
+
+        entities = self.get_entities()
+
+        return f.create_entity("IfcVertex", **entities)
+
+
+@dataclass
+class IfcVertexPoint(IfcVertex):
+    """https://standards.buildingsmart.org/IFC/DEV/IFC4_2/FINAL/HTML/schema/ifctopologyresource/lexical/ifcedge.htm"""
+
+    vertex_geometry : IfcPoint
+
+    def get_entities(self):
+        entities = super().get_entities()
+        entities['VertexGeometry'] = self.vertex_geometry
+
+        return entities
+
+    def to_ifcopenshell(self, f):
+        from ada.cadit.ifc.utils import ifc_p
+
+        entities = self.get_entities()
+
+        return f.create_entity("IfcVertexPoint", **entities)
+
+
+@dataclass
+class IfcPoint(IfcVertex):
+    """https://standards.buildingsmart.org/IFC/DEV/IFC4_2/FINAL/HTML/schema/ifcgeometryresource/lexical/ifcpoint.htm"""
+
+    def get_entities(self):
+        entities = super().get_entities()
+        return entities
+
+    def to_ifcopenshell(self, f):
+        from ada.cadit.ifc.utils import ifc_p
+
+        entities = self.get_entities()
+
+        return f.create_entity("IfcPoint", **entities)
+
+@dataclass
+class IfcCartesianPoint(IfcPoint):
+    """https://standards.buildingsmart.org/IFC/DEV/IFC4_2/FINAL/HTML/schema/ifcgeometryresource/lexical/ifccartesianpoint.htm"""
+    coordinates: list[float]
+
+    def get_entities(self):
+        return {"Coordinates" : self.coordinates}
+
+    def to_ifcopenshell(self, f):
+        from ada.cadit.ifc.utils import ifc_p
+
+        entities = self.get_entities()
+
+        return f.create_entity("IfcCartesianPoint", **entities)
+
+
+@dataclass
+class IfcEdge:
+    """https://standards.buildingsmart.org/IFC/DEV/IFC4_2/FINAL/HTML/schema/ifctopologyresource/lexical/ifcedge.htm"""
+
+    edge_start : Union[IfcVertex, None]
+    edge_stop : Union[IfcVertex, None]
+    def get_entities(self):
+        return {
+            "EdgeStart" : self.edge_start,
+            "EdgeStop": self.edge_stop
+        }
+
+    def to_ifcopenshell(self, f):
+        from ada.cadit.ifc.utils import ifc_p
+
+        entities = self.get_entities()
+
+        return f.create_entity("IfcEdge", **entities)
+
+@dataclass
+class IfcOrientedEdge:
+    """https://standards.buildingsmart.org/IFC/DEV/IFC4_2/FINAL/HTML/schema/ifctopologyresource/lexical/ifcorientededge.htm"""
+
+    edge_element : IfcEdge
+    orientation : bool #IfcBoolean
+
+    def get_entities(self):
+        entities = {}
+        entities['EdgeElement'] = self.edge_element
+        entities['Orientation'] = self.orientation
+        return entities
+
+    def to_ifcopenshell(self, f):
+        entities = self.get_entities()
+
+        return f.create_entity("IfcOrientedEdge", **entities)
+
+@dataclass
+class IfcCurve:
+
+    def get_entities(self):
+        return {}
+    def to_ifcopenshell(self, f):
+        return f.create_entity("IfcCurve")
+
+
+@dataclass
+class IfcEdgeCurve(IfcEdge):
+    """https://standards.buildingsmart.org/IFC/DEV/IFC4_2/FINAL/HTML/schema/ifctopologyresource/lexical/ifcedgecurve.htm"""
+
+    edge_geometry : IfcCurve
+    same_sense : bool #IfcBoolean
+    def get_entities(self):
+        entities = super().get_entities()
+        entities['EdgeGeometry'] = self.edge_geometry
+        entities['SameSense'] = self.same_sense
+        return entities
+
+    def to_ifcopenshell(self, f):
+        entities = self.get_entities()
+
+        return f.create_entity("IfcEdgeCurve", **entities)
+@dataclass
+class IfcEdgeLoop:
+    """https://standards.buildingsmart.org/IFC/DEV/IFC4_2/FINAL/HTML/schema/ifctopologyresource/lexical/ifcedgeloop.htm"""
+
+    edge_list : list[IfcOrientedEdge]
+
+    def get_entities(self):
+        return {"EdgeList" : self.edge_list}
+
+    def to_ifcopenshell(self, f):
+        entities = self.get_entities()
+
+        return f.create_entity("IfcEdgeLoop", **entities)
+
+@dataclass
+class IfcPolyline:
+    """https://standards.buildingsmart.org/IFC/DEV/IFC4_2/FINAL/HTML/schema/ifcgeometryresource/lexical/ifcpolyline.htm"""
+
+    points : list[IfcCartesianPoint]
+
+    def get_entities(self):
+        return {"Points" : self.points}
+
+    def to_ifcopenshell(self, f):
+        entities = self.get_entities()
+
+        return f.create_entity("IfcPolyline", **entities)
+

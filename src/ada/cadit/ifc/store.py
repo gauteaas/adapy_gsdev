@@ -52,7 +52,7 @@ class IfcStore:
                 self.f = assembly_to_ifc_file(self.assembly)
                 self.add_standard_contexts()
 
-    def add_standard_contexts(self):
+    def add_standard_contexts(self, model_context_by_type=True):
         contexts = list(self.f.by_type("IfcGeometricRepresentationContext"))
         model_context = list(filter(lambda x: x.ContextType.upper() == "MODEL", contexts))[0]
         for cid, target_view in [("Body", "MODEL_VIEW"), ("Axis", "GRAPH_VIEW"), ("Box", "MODEL_VIEW")]:
@@ -63,6 +63,7 @@ class IfcStore:
                 ParentContext=model_context,
                 TargetView=target_view,
             )
+
         plan_context = self.f.create_entity(
             "IfcGeometricRepresentationContext",
             ContextType="Plan",

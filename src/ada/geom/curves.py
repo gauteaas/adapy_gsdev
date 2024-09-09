@@ -214,3 +214,41 @@ class BSplineCurveWithKnots:
     knot_multiplicities: list[int]
     knots: list[float]
     knot_spec: BsplineKnotSpecEnum
+
+    def get_entities(self):
+        return {
+            "Degree": self.degree,
+            "ControlPointsList": self.control_points_list,
+            "CurveForm": self.curve_form.value,
+            "ClosedCurve": False,
+            "SelfIntersect": False,
+            "Knots": self.knots,
+            "KnotMultiplicities": self.knot_multiplicities,
+            "KnotSpec": "UNSPECIFIED",
+        }
+
+    def to_ifcopenshell(self, f):
+        from ada.cadit.ifc.utils import ifc_p
+
+        entities = self.get_entities()
+        entities["ControlPointsList"] = [ifc_p(f, x[:3]) for x in self.control_points_list]
+        return f.create_entity("IfcBSplineCurveWithKnots", **entities)
+
+
+@dataclass
+class RationalBSplineCurveWithKnots(BSplineCurveWithKnots):
+
+    weightsData: list[list[float]]
+
+    def get_entities(self):
+        entities = super().get_entities()
+        entities["WeightsData"] = self.weightsData
+        return entities
+
+    def to_ifcopenshell(self, f):
+        from ada.cadit.ifc.utils import ifc_p
+
+        entities = self.get_entities()
+        entities["ControlPointsList"] = [ifc_p(f, x[:3]) for x in self.control_points_list]
+        return f.create_entity("IfcRationalBSplineCurveWithKnots", **entities)
+

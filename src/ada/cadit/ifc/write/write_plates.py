@@ -45,3 +45,6 @@ def write_ifc_plate(plate: Plate):
     ifc_store.writer.associate_elem_with_material(plate.material, ifc_plate)
 
     return ifc_plate
+
+
+

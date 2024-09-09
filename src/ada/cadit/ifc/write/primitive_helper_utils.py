@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from ada.api.primitives import (
         BSplineSurfaceWithKnots,
         RationalBSplineSurfaceWithKnots,
+
     )
     from ada.cadit.ifc.store import IfcStore
 
